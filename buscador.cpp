@@ -8,7 +8,23 @@
 #include <condition_variable>
 #include <string>
 #include <queue>
+#include <fstream>
 #include <stdlib.h>
+
+#define N_CLIENTES 20
+
+std::condition_variable cv; /* Controla acceso para el sistema de pago */
+std::mutex mutex;
+std::mutex aux;
+
+std::queue<int> cola; /* Controla acceso para el sistema de pago */
+std::vector<std::string> v_libros={"libro1.txt","libro2.txt","libro3.txt"};
+/* Perdemos la referencia a estos tres vectores, se accede desde v_Lines[i]*/
+std::vector<std::string> v_Lines_1;
+std::vector<std::string> v_Lines_2;
+std::vector<std::string> v_Lines_3;
+
+std::vector<std::vector<std::string>> v_Lines={v_Lines_1,v_Lines_2,v_Lines_3};
 
 std::vector<std::string> palabras = {
     "ley",
@@ -17,6 +33,7 @@ std::vector<std::string> palabras = {
     "arbol"};
 
 void sistemaPago(int cliente);
+
 class Cliente
 {
 public:
@@ -55,11 +72,7 @@ public:
     }
 };
 
-std::condition_variable cv;
-std::mutex mutex;
-std::mutex aux;
-std::vector<Cliente> v_clientes;
-std::queue<int> cola;
+std::vector<Cliente> v_clientes; /* Vector que almancena clientes */
 
 void sistemaPago(int cliente)
 {
@@ -73,11 +86,37 @@ void sistemaPago(int cliente)
     cv.notify_one();
 }
 
+void leerArchivo(std::ifstream &file,int i){
+  std::string line;
+  getline(file,line);
+  while(!file.eof()){
+    transform(line.begin(),line.end(),line.begin(),::tolower);
+    v_Lines[i].push_back(line);
+    getline(file,line);
+    
+  }
+}
+
+void leerLibros(){
+  
+  for(int i=0;i<v_libros.size();i++){
+    
+    std::ifstream file(v_libros[i]);
+    file.clear();
+    leerArchivo(file,i);
+    file.close();
+  }
+}
+
+
+
+
 int main()
 {
     std::vector<std::thread> vhilos;
-
-    for (int j = 0; j < 5; j++)
+    leerLibros();
+    /*
+    for (int j = 0; j < N_CLIENTES; j++)
     {
         bool prem;
         int val = 5;
@@ -100,4 +139,5 @@ int main()
         v_clientes.push_back(c);
     }
     std::for_each(vhilos.begin(), vhilos.end(), std::mem_fn(&std::thread::join));
+    */
 }

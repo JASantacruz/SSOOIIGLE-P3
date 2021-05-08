@@ -12,25 +12,26 @@
 #include <stdlib.h>
 
 #define N_CLIENTES 20
-
-std::condition_variable cv; /* Controla acceso para el sistema de pago */
-std::mutex mutex;
+/*Sistema de Pago*/
+std::condition_variable cv_pago; /* Controla acceso para el sistema de pago */
 std::mutex aux;
+std::queue<int> cola_pago; /* Controla acceso para el sistema de pago */
 
-std::queue<int> cola; /* Controla acceso para el sistema de pago */
-std::vector<std::string> v_libros={"libro1.txt","libro2.txt","libro3.txt"};
+std::vector<std::string> v_libros = {"libro1.txt", "libro2.txt", "libro3.txt"};
 /* Perdemos la referencia a estos tres vectores, se accede desde v_Lines[i]*/
 std::vector<std::string> v_Lines_1;
 std::vector<std::string> v_Lines_2;
 std::vector<std::string> v_Lines_3;
 
-std::vector<std::vector<std::string>> v_Lines={v_Lines_1,v_Lines_2,v_Lines_3};
+std::vector<std::vector<std::string>> v_Lines = {v_Lines_1, v_Lines_2, v_Lines_3};
 
 std::vector<std::string> palabras = {
     "ley",
     "equipo",
     "proyecto",
     "arbol"};
+
+std::vector<std::thread> vhilos;
 
 void sistemaPago(int cliente);
 
@@ -53,7 +54,6 @@ public:
     {
         while (1)
         {
-
             if (this->saldo == 0 && premium == true)
             {
                 sistemaPago(id);
@@ -61,6 +61,7 @@ public:
             this->saldo--;
         }
     }
+
     void setPalabra()
     {
         this->palabra = palabras.at((rand() % palabras.size()));
@@ -78,45 +79,43 @@ void sistemaPago(int cliente)
 {
 
     std::unique_lock<std::mutex> ul(aux);
-    cv.wait(ul, [cliente] { return cola.empty(); });
-    cola.push(cliente);
+    cv_pago.wait(ul, [cliente] { return cola_pago.empty(); });
+    cola_pago.push(cliente);
     std::cout << "Actualizando saldo del cliente " << cliente << "..." << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     v_clientes.at(cliente).setSaldo(5);
-    cola.pop();
-    cv.notify_one();
+    cola_pago.pop();
+    cv_pago.notify_one();
 }
 
-void leerArchivo(std::ifstream &file,int i){
-  std::string line;
-  getline(file,line);
-  while(!file.eof()){
-    transform(line.begin(),line.end(),line.begin(),::tolower);
-    v_Lines[i].push_back(line);
-    getline(file,line);
-    
-  }
-}
-
-void leerLibros(){
-  
-  for(int i=0;i<v_libros.size();i++){
-    
-    std::ifstream file(v_libros[i]);
-    file.clear();
-    leerArchivo(file,i);
-    file.close();
-  }
-}
-
-
-
-
-int main()
+void leerArchivo(std::ifstream &file, int i)
 {
-    std::vector<std::thread> vhilos;
-    leerLibros();
-    /*
-    for (int j = 0; j < N_CLIENTES; j++)
+    std::string line;
+    getline(file, line);
+    while (!file.eof())
+    {
+        transform(line.begin(), line.end(), line.begin(), ::tolower);
+        v_Lines[i].push_back(line);
+        getline(file, line);
+    }
+}
+
+void leerLibros()
+{
+
+    for (int i = 0; i < v_libros.size(); i++)
+    {
+
+        std::ifstream file(v_libros[i]);
+        file.clear();
+        leerArchivo(file, i);
+        file.close();
+    }
+}
+
+void crearClientes()
+{
+    for (int j = 0; j < 5; j++)
     {
         bool prem;
         int val = 5;
@@ -138,6 +137,16 @@ int main()
         vhilos.push_back(std::thread(c));
         v_clientes.push_back(c);
     }
+
+    for (int i = 0; i < v_clientes.size(); i++)
+    {
+        std::cout << "Cliente " << i << ": \n\tID: " << v_clientes.at(i).id << ".\n\t Saldo: " << v_clientes.at(i).saldo << ".\n\t ¿Es premium? " << v_clientes.at(i).premium << std::endl;
+    }
+}
+
+int main()
+{
+    leerLibros();
+    crearClientes();
     std::for_each(vhilos.begin(), vhilos.end(), std::mem_fn(&std::thread::join));
-    */
 }

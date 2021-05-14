@@ -1,9 +1,22 @@
+DIROBJ := obj/
+DIREXE := exec/
+DIRHEA := include/
+DIRSRC := src/
+
+FLAGS := -pthread -std=c++11 -Iinclude/
+PP := g++ -g
+
 all: compile
 
+dirs:
+	mkdir -p $(DIROBJ) $(DIREXE)
 
 compile:
-	g++ ./src/buscador.cpp -o ./exec/buscador -pthread -std=c++11 -I include/
+	$(PP) ./$(DIRSRC)buscador.cpp -o ./$(DIREXE)buscador $(FLAGS) 
 
 
 solution:
-	./exec/buscador
+	./$(DIREXE)buscador
+
+clean : 
+	rm -rf *~ core $(DIROBJ) $(DIREXE)

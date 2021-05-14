@@ -1,7 +1,8 @@
 /*
 ---- Clase Ocurrencia y Comparator ----
 AUTHOR: Silvestre Sanchez-Bermejo Sanchez
-DATE: 16/04/2021
+        Jose Antonio Santacruz Gallego
+DATE: 14/05/2021
 DESCRIPCION: Clase creada para el buscador SSOOIIGLE
              ID_Hilo: ID del hilo que encontró la ocurrencia
 	     Inicio: Linea en la que el hilo empezó a buscar
@@ -19,7 +20,8 @@ Usado para ordenar una priority queue en funcion del numero de linea
 de menor a mayor
 */
 
-class Ocurrencia{
+class Ocurrencia
+{
 public:
   int ID_Hilo;
   int inicio;
@@ -28,21 +30,31 @@ public:
   std::string prev_word;
   std::string next_word;
   int linea;
-  Ocurrencia(int ID, int in, int f,int line, std::string w, std::string p_word, std::string n_word){
-    ID_Hilo=ID;
-    inicio=in;
-    fin=f;
-    linea=line;
-    word=w;
-    prev_word=p_word;
-    next_word=n_word;
+  Ocurrencia(int ID, int in, int f, int line, std::string w, std::string p_word, std::string n_word)
+  {
+    ID_Hilo = ID;
+    inicio = in;
+    fin = f;
+    linea = line;
+    word = w;
+    prev_word = p_word;
+    next_word = n_word;
   }
 };
 
-  
-class cmpFunction{
+class cmpFunction
+{
 public:
-  int operator()(const Ocurrencia &a, const Ocurrencia &b){
-    return a.linea>b.linea;
+  int operator()(const Ocurrencia &a, const Ocurrencia &b)
+  {
+
+    if (a.ID_Hilo == b.ID_Hilo)
+    {
+      return a.linea > b.linea;
+    }
+    else
+    {
+      return a.ID_Hilo > b.ID_Hilo;
+    }
   }
 };

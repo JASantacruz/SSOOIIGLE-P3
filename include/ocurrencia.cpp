@@ -15,9 +15,8 @@ DESCRIPCION: Clase creada para el buscador SSOOIIGLE
 	     Linea: Linea del archivo en la que se encontró la ocurrencia
 
 Comparator:
-
-Usado para ordenar una priority queue en funcion del numero de linea
-de menor a mayor
+       Usado para ordenar una priority queue en funcion del numero de linea
+       de menor a mayor
 */
 
 class Ocurrencia

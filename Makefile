@@ -6,7 +6,7 @@ DIRSRC := src/
 FLAGS := -pthread -std=c++11 -Iinclude/
 PP := g++ -g
 
-all: compile
+all: dirs compile
 
 dirs:
 	mkdir -p $(DIROBJ) $(DIREXE)

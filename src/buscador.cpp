@@ -1,3 +1,15 @@
+/*
+---- Clase principal del Buscador SSOOIIGLE ----
+AUTHOR: Silvestre Sanchez-Bermejo Sanchez
+        Jose Antonio Santacruz Gallego
+DATE: 14/05/2021
+DESCRIPCION: 
+       Aqui se realiza la funcion principal de la practica.
+       Se crean los clientes (20 % no premium, 80 % premium), se generan los hilos
+       que leeran los libros, y se guardan las ocurrencias de palabra que coincidan
+       con la que se busca.
+*/
+
 #include <iostream>
 #include <mutex>
 #include <thread>

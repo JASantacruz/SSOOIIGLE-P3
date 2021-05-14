@@ -35,15 +35,15 @@ DESCRIPCION:
 
 /***************************************************************
 
-               SEMAFOROS Y SINCRONIZACION
+               g_semaforoS Y SINCRONIZACION
 
  ***************************************************************/
 
-std::condition_variable cv_pago;       /* Controla acceso para el sistema de pago */
-std::mutex aux;                        /* Controla acceso para el sistema de pago */
-std::queue<int> cola_pago;             /* Controla acceso para el sistema de pago */
-std::mutex semaforo;                   /* Controla acceso a las PQ de ocurrencias*/
-SemCounter accesoBusqueda(N_REPLICAS); /* Controla numero de hilos buscadores*/
+std::condition_variable g_cv_pago;       /* Controla acceso para el sistema de pago */
+std::mutex g_aux;                        /* Controla acceso para el sistema de pago */
+std::queue<int> g_cola_pago;             /* Controla acceso para el sistema de pago */
+std::mutex g_semaforo;                   /* Controla acceso a las PQ de ocurrencias*/
+SemCounter g_accesoBusqueda(N_REPLICAS); /* Controla numero de hilos buscadores*/
 
 /***************************************************************
 
@@ -51,13 +51,13 @@ SemCounter accesoBusqueda(N_REPLICAS); /* Controla numero de hilos buscadores*/
 
  ***************************************************************/
 
-std::vector<std::string> v_libros = {"utils/libro1.txt", "utils/libro2.txt", "utils/libro3.txt"};
-/* Perdemos la referencia a estos tres vectores, se accede desde v_Lines[i]*/
-std::vector<std::string> v_Lines_1;
-std::vector<std::string> v_Lines_2;
-std::vector<std::string> v_Lines_3;
+std::vector<std::string> g_v_libros = {"utils/libro1.txt", "utils/libro2.txt", "utils/libro3.txt"};
+/* Perdemos la referencia a estos tres vectores, se accede desde g_v_Lines[i]*/
+std::vector<std::string> g_v_Lines_1;
+std::vector<std::string> g_v_Lines_2;
+std::vector<std::string> g_v_Lines_3;
 
-std::vector<std::vector<std::string>> v_Lines = {v_Lines_1, v_Lines_2, v_Lines_3};
+std::vector<std::vector<std::string>> g_v_Lines = {g_v_Lines_1, g_v_Lines_2, g_v_Lines_3};
 
 std::vector<std::string> palabras = {
     "ley",
@@ -67,9 +67,9 @@ std::vector<std::string> palabras = {
     "siempre",
     "equipo"};
 
-std::vector<std::thread> vhilos;
-std::vector<std::thread> v_Hilos_Busqueda;
-std::vector<std::priority_queue<Ocurrencia, std::vector<Ocurrencia>, cmpFunction>> v_PQ;
+std::vector<std::thread> g_vhilos;
+std::vector<std::thread> g_v_Hilos_Busqueda;
+std::vector<std::priority_queue<Ocurrencia, std::vector<Ocurrencia>, cmpFunction>> g_v_PQ;
 
 /***************************************************************
 
@@ -119,20 +119,25 @@ public:
   {
     int n = 0;
     std::cout << COLOR_YELLOW << "[CLIENTE " << this->id << " COMIENZA...]\n";
-    while (!v_PQ[id].empty())
+    while (!g_v_PQ.at(id).empty())
     {
-      Ocurrencia o = v_PQ[id].top();
+      Ocurrencia o = g_v_PQ.at(id).top();
       std::cout << COLOR_CYAN << "[HILO " << o.ID_Hilo << " inicio: " << o.inicio << " - final: " << o.fin << "] :: " << COLOR_RESET << "linea " << o.linea << " :: ... " << o.prev_word << " " << COLOR_RED << o.word << " " << COLOR_RESET << o.next_word << " ..." << std::endl;
 
-      v_PQ[id].pop();
+      g_v_PQ.at(id).pop();
       n++;
 
+      //Comprobamos si el cliente no es Premium ilimitado
       if (this->saldo != -1)
       {
         this->saldo--;
-        if (this->premium = 1 && this->saldo == 0)
+        if (this->saldo == 0)
         {
-          sistemaPago(id);
+          if (this->premium == 1)
+            sistemaPago(id);
+          else
+
+            std::cout << COLOR_MAGENTA << "\n\n[CLIENTE " << this->id << " HA FINALIZADO SU SALDO]\n";
         }
       }
     }
@@ -142,7 +147,7 @@ public:
   }
 };
 
-std::vector<Cliente> v_clientes; /* Vector que almancena clientes */
+std::vector<Cliente> g_v_clientes; /* Vector que almancena clientes */
 
 /***************************************************************
 
@@ -153,15 +158,15 @@ std::vector<Cliente> v_clientes; /* Vector que almancena clientes */
 void sistemaPago(int cliente)
 {
 
-  std::unique_lock<std::mutex> ul(aux);
-  cv_pago.wait(ul, [cliente]
-               { return cola_pago.empty(); });
-  cola_pago.push(cliente);
+  std::unique_lock<std::mutex> ul(g_aux);
+  g_cv_pago.wait(ul, [cliente]
+                 { return g_cola_pago.empty(); });
+  g_cola_pago.push(cliente);
   std::cout << "\n\nActualizando saldo del cliente " << cliente << "...\n\n";
   std::this_thread::sleep_for(std::chrono::milliseconds(2000)); //Simulamos el trabajo
-  v_clientes.at(cliente).setSaldo(50);
-  cola_pago.pop();
-  cv_pago.notify_one();
+  g_v_clientes.at(cliente).setSaldo(50);
+  g_cola_pago.pop();
+  g_cv_pago.notify_one();
 }
 
 /***************************************************************
@@ -178,7 +183,7 @@ void leerArchivo(std::ifstream &file, int i)
   {
     transform(line.begin(), line.end(), line.begin(), ::tolower);
 
-    v_Lines[i].push_back(line);
+    g_v_Lines.at(i).push_back(line);
     getline(file, line);
   }
 }
@@ -188,7 +193,7 @@ void leerLibros()
 
   for (int i = 0; i < N_LIBROS; i++)
   {
-    std::ifstream file(v_libros[i]);
+    std::ifstream file(g_v_libros.at(i));
     file.clear();
     leerArchivo(file, i);
     file.close();
@@ -208,7 +213,7 @@ void crearClientes()
     bool prem;
     int val = 50;
 
-    /*Si su ID no es multiple de 5, sera premium*/
+    /*Si su ID no es multiplo de 5, sera premium*/
     if (j % 5 != 0)
     {
       prem = true;
@@ -226,8 +231,8 @@ void crearClientes()
     }
 
     Cliente c(j, val, prem);
-    vhilos.push_back(std::thread(c));
-    v_clientes.push_back(c);
+    g_vhilos.push_back(std::thread(c));
+    g_v_clientes.push_back(c);
   }
 }
 
@@ -239,8 +244,8 @@ void crearClientes()
 
 void tokenizar(std::vector<std::string> &v_tokens, int line, int libro)
 {
-  std::vector<std::string> v_aux = v_Lines[libro];
-  std::stringstream check1(v_aux[line]);
+  std::vector<std::string> v_g_aux = g_v_Lines.at(libro);
+  std::stringstream check1(v_g_aux.at(line));
   std::string token;
 
   while (getline(check1, token, ' '))
@@ -258,8 +263,8 @@ void tokenizar(std::vector<std::string> &v_tokens, int line, int libro)
 
 void addPQ(Ocurrencia oc, int ID_cliente)
 {
-  std::lock_guard<std::mutex> lock(semaforo);
-  v_PQ[ID_cliente].push(oc);
+  std::lock_guard<std::mutex> lock(g_semaforo);
+  g_v_PQ.at(ID_cliente).push(oc);
 }
 
 /***************************************************************
@@ -270,7 +275,7 @@ void addPQ(Ocurrencia oc, int ID_cliente)
 
 void encontrar(int inicio, int final, std::string word, int ID, int ID_Libro, int ID_cliente)
 {
-  accesoBusqueda.wait();
+  g_accesoBusqueda.wait();
   int linea = inicio;
   /*Itera linea a linea*/
   for (linea; linea <= final; linea++)
@@ -297,23 +302,23 @@ void encontrar(int inicio, int final, std::string word, int ID, int ID_Libro, in
         }
         else if (index == v_tokens.size() - 1)
         { /*Ultima palabra de la linea*/
-          Ocurrencia y(ID, inicio, final, linea, word, v_tokens[index - 1], "");
+          Ocurrencia y(ID, inicio, final, linea, word, v_tokens.at(index - 1), "");
           addPQ(y, ID_cliente);
         }
         else if (index == 0)
         { /*Primera palabra de la linea*/
-          Ocurrencia z(ID, inicio, final, linea, word, "", v_tokens[index + 1]);
+          Ocurrencia z(ID, inicio, final, linea, word, "", v_tokens.at(index + 1));
           addPQ(z, ID_cliente);
         }
         else
         { /*Encontrado entre dos palabras*/
-          Ocurrencia o(ID, inicio, final, linea, word, v_tokens[index - 1], v_tokens[index + 1]);
+          Ocurrencia o(ID, inicio, final, linea, word, v_tokens.at(index - 1), v_tokens.at(index + 1));
           addPQ(o, ID_cliente);
         }
       }
     }
   }
-  accesoBusqueda.signal();
+  g_accesoBusqueda.signal();
 }
 
 /***************************************************************
@@ -327,7 +332,7 @@ void crearHilos(int hilos[], std::string word, int ID_cliente)
 
   for (int e = 0; e < N_LIBROS; e++)
   {
-    int n_lineas = v_Lines[e].size();
+    int n_lineas = g_v_Lines.at(e).size();
     int n_lineas_hilo = n_lineas / hilos[e];
     int inicio = 0;
     for (int i = 1; i <= hilos[e]; i++)
@@ -337,7 +342,7 @@ void crearHilos(int hilos[], std::string word, int ID_cliente)
       /* Si es el ultimo hilo , debe acabar con la ultima linea*/
       if (i == hilos[e])
         final = n_lineas - 1;
-      v_Hilos_Busqueda.push_back(std::thread(encontrar, inicio, final, word, i, e, ID_cliente));
+      g_v_Hilos_Busqueda.push_back(std::thread(encontrar, inicio, final, word, i, e, ID_cliente));
       inicio = final + 1;
     }
   }
@@ -350,11 +355,15 @@ void Busqueda(std::string word, int ID_cliente)
   int hilos_por_libro[N_LIBROS];
   for (int i = 0; i < N_HILOS; i++)
   {
+    hilos_por_libro[i] = 0;
+  }
+  for (int i = 0; i < N_HILOS; i++)
+  {
     hilos_por_libro[i % N_LIBROS]++;
   }
   /* CREAMOS HILOS */
   crearHilos(hilos_por_libro, word, ID_cliente);
-  std::for_each(v_Hilos_Busqueda.begin(), v_Hilos_Busqueda.end(), std::mem_fn(&std::thread::join));
+  std::for_each(g_v_Hilos_Busqueda.begin(), g_v_Hilos_Busqueda.end(), std::mem_fn(&std::thread::join));
   std::cout << "FIN BUSQUEDA" << std::endl;
   mostrar();
 }
@@ -362,7 +371,7 @@ void Busqueda(std::string word, int ID_cliente)
 void mostrar()
 {
   for (int i = 0; i < N_CLIENTES; i++)
-    v_clientes[i].mostrarResultados();
+    g_v_clientes.at(i).mostrarResultados();
 }
 
 /***************************************************************
@@ -376,7 +385,7 @@ void crearPQs()
   for (int i = 0; i < N_CLIENTES; i++)
   {
     std::priority_queue<Ocurrencia, std::vector<Ocurrencia>, cmpFunction> x;
-    v_PQ.push_back(x);
+    g_v_PQ.push_back(x);
   }
 }
 
@@ -393,12 +402,12 @@ int main()
     crearPQs();
     leerLibros();
     crearClientes();
-    std::for_each(vhilos.begin(), vhilos.end(), std::mem_fn(&std::thread::join));
+    std::for_each(g_vhilos.begin(), g_vhilos.end(), std::mem_fn(&std::thread::join));
     exit(EXIT_SUCCESS);
   }
   catch (std::exception &e)
   {
-    std::cout << COLOR_RED << "ERROR EN LA EJECUCION DEL PROGRAMA" << COLOR_RESET << std::endl;
+    std::cerr << COLOR_RED << "ERROR EN LA EJECUCION DEL PROGRAMA" << COLOR_RESET << std::endl;
     exit(EXIT_FAILURE);
   }
 }

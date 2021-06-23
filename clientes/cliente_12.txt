@@ -1,2 +1,2 @@
-[0mNumero de ocurrencias de la palabra arbol: 0
+[0mNumero de ocurrencias de la palabra [31marbol[0m: 0
 

@@ -111,7 +111,7 @@ public:
       n++;
     }
 
-    std::cout << COLOR_RESET << "Numero de ocurrencias de la palabra " << this->palabra << ": " << n << "\n\n";
+    std::cout << COLOR_RESET << "Numero de ocurrencias de la palabra " << COLOR_RED << this->palabra << COLOR_RESET << ": " << n << "\n\n";
   }
 };
 
@@ -171,7 +171,7 @@ void sistemaPago()
     }
     catch (std::exception &e)
     {
-      std::cout << COLOR_RED << "[SP] Se ha producido un error atendiendo al cliente." << COLOR_RESET << std::endl;
+      std::cerr << COLOR_RED << "[SP] Se ha producido un error atendiendo al cliente." << COLOR_RESET << std::endl;
     }
   }
 }
@@ -323,7 +323,7 @@ void crearClientes()
     Cliente c(i, saldo, premium);
     g_vClientes.push_back(c);
     g_vHilosCliente.push_back(std::thread(c));
-    std::cout << COLOR_YELLOW << "\n[CLIENTE " << i << " COMIENZA...]" << std::endl;
+    std::cout << COLOR_YELLOW << "\n[CLIENTE " << i << " COMIENZA...]" << COLOR_RESET << std::endl;
   }
 }
 

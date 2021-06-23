@@ -1,6 +1,11 @@
 # INSTRUCCIONES DE USO ---- SSOOIIGLE-P3
 
+**REPOSITORIO EN GITHUB**
+
+https://github.com/JASantacruz/SSOOIIGLE-P3
+
 **COMPILAR**
+
 - Para compilar esta practica, bastaria con la utilizacion del comando
 
         make
@@ -21,6 +26,7 @@ el depurador GBD gracias al flag "-g" que acompaña al comando g++
 Una vez hecho esto, todos estara listo para la ejecucion del programa.
 
 **EJECUTAR**
+
 - Para ejecutar esta practica, bastaria con la utilizacion del comando
 
         make solution
@@ -35,8 +41,8 @@ que comenzara la ejecucion normal de la practica.
 **LIMPIAR**
 
 - En caso de querer eliminar los ficheros creados mediante la compilacion
-de la practica, bastaria con ejecutar el comando
+  de la practica, bastaria con ejecutar el comando
 
-        make clean
+          make clean
 
 que eliminaria los directorios obj/, exec/ y todo lo que hay dentro de ellos.
